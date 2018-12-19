@@ -6,8 +6,8 @@ library(shiny)
 library(dplyr)
 library(tidyr)
 
-setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/Results")
-setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/Results/Unaided")
+setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/")
+#setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/Results/Unaided")
 # Select Hagerman test results to consolidate. Do not include Parentheses in the selection input. 
 
 h_test <- readline(prompt="Enter name of one Hagerman test. Parentheses surround each choice : (Aided, ISTS) , (Aided, SPSHN) , (Unaided, ISTS) , (Unaided SPSHN) :   ")
@@ -31,7 +31,7 @@ if (i==1){
 }
 
 
-attenuation <- master_file_data[,c(1,12,2:5)]
+attenuation <- master_file_data[,c(1,20,2:5)]
 att_long <- attenuation %>% gather(ear,attenuation,attenuation_1:attenuation_2)
 
 emp <- master_file_data[,c(6,7)]
@@ -40,16 +40,23 @@ emp_long <- emp %>% gather(ear,emperical,snr_empirical_1:snr_empirical_2)
 theoretical <- master_file_data[,c(8,9)]
 theoretical_long <- theoretical %>% gather(ear,theoretical,snr_theoretical_1:snr_theoretical_2)
 
-haspi <- master_file_data[,c(10,11)]
-haspi_long <- haspi %>% gather(ear,haspi,haspi_1:haspi_2)
+intel <- master_file_data[,c(10,11)]
+intel_long <- intel %>% gather(ear,intel,intel_1:intel_2)
 
-master_file_data <- cbind(att_long,emp_long,theoretical_long,haspi_long)
-master_file_data <- master_file_data[-c(4,7,9,11)]
-master_file_data$ear[master_file_data$ear=='attenuation_1'] <- 1
-master_file_data$ear[master_file_data$ear=='attenuation_2'] <- 2
+# Attempt to convert all 'raw' values into long format. Skip for now and just use sep corr
+#raw <- master_file_data[,c(12:19)]
+#raw_long <- raw %>% gather(ear,raw,raw_1:raw_8)
 
-names(master_file_data) <- c('SubId','Noise_type','SNR_requested','Ear(1=left)','SNR_attenuation','SNR_empirical','SNR_theoretical','HASPI')
-attach(master_file_data)
+raw <- master_file_data[,c(12,16)]
+raw_long <- raw %>% gather(ear,raw,raw_1:raw_5)
 
-master_file_data <- master_file_data[order(SubId,Noise_type),]
-write.csv(master_file_data,paste("Master_HASPI ",h_test,' ',Sys.Date(),".csv",sep=""),row.names=F)
+master_data <- cbind(att_long,emp_long,theoretical_long,intel_long,raw_long)
+master_data <- master_data[-c(4,7,9,11,13)]
+master_data$ear[master_data$ear=='attenuation_1'] <- 1
+master_data$ear[master_data$ear=='attenuation_2'] <- 2
+
+names(master_data) <- c('SubId','Noise_type','SNR_requested','Ear(1=left)','SNR_attenuation','SNR_empirical','SNR_theoretical','HASPI','SepCorr')
+attach(master_data)
+
+master_data <- master_data[order(SubId,Noise_type),]
+write.csv(master_data,paste("Master_HASPI ",h_test,' ',Sys.Date(),".csv",sep=""),row.names=F)
