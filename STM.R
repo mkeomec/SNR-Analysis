@@ -43,6 +43,7 @@ UW_STM_ISTS <- UW_STM_data[which(UW_STM_data$Noise_Type=='ISTS'),]
 UW_STM_SPSHN <- UW_STM_data[which(UW_STM_data$Noise_Type=='SPSHN'),]
 
 ## EDI data import
+# Current EDI dataset only contains IOWA data
 
 ISTS_edi_data <- read.csv('H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/EDI_analysis_ISTS27-Oct-2018.csv')
 SPSHN_edi_data <- read.csv('H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/EDI_analysis_SPSHN27-Oct-2018.csv')
@@ -87,115 +88,44 @@ merged_data <- merge(merged_data,HASPI_cor_SPSHN, by.x=c('SubId','Noise_type'), 
 'SPSHN'
 }else{'unknown test type'}
 
+# Stratify HASPI, edi, BB1,  by median
 
+merged_data$HASPI_bin <- 0
+merged_data$HASPI_bin[which(merged_data$SNR8estimate>median(merged_data$SNR8estimate))] <- 1
 
-merged_UW <- merge(HASPI_8_data,UW_SPSHN, by.x=c('SubId','Noise_type'), by.y=c('Subject','Noise_Type'))
-merged_UW <- merge(HASPI_8_data,UW_ISTS, by.x=c('SubId','Noise_type'), by.y=c('Subject','Noise_Type'))
+merged_data$edi_bin <- 0
+merged_data$edi_bin[which(merged_data$edi>median(merged_data$edi))] <- 1
 
-merged_IOWA <- merge(HASPI_8_data,IOWA_SPSHN, by.x=c('SubId','Noise_type'), by.y=c('Subject','Noise_Type'))
-merged_IOWA <- merge(HASPI_8_data,IOWA_ISTS, by.x=c('SubId','Noise_type'), by.y=c('Subject','Noise_Type'))
+merged_data$BB1_bin <- 0
+merged_data$BB1_bin[which(merged_data$BB1>median(merged_data$BB1))] <- 1
 
-merged_UW$HASPI <- 0
-merged_UW$HASPI[which(merged_UW$SNR8estimate>median(merged_UW$SNR8estimate))] <- 1
-
-merged_IOWA$HASPI <- 0
-merged_IOWA$HASPI[which(merged_IOWA$SNR8estimate>median(merged_IOWA$SNR8estimate))] <- 1
-
-# Merge HASPI and STM Iowa data with EDI dataset
-
-merged_IOWA <- merge(merged_IOWA,left_SNR10_edi, by.x=c('SubId','Noise_type'), by.y=c('sub_id','noise_test'))
-
-Iowa_SPSHN_merge<- merge(merged_IOWA,SPSHN_edi_data, by.x='SubId', by.y='sub_id')
-
-# Stratify edi by median
-
-Iowa_SPSHN_merge$edi_bin <- 0
-Iowa_SPSHN_merge$edi_bin[which(Iowa_SPSHN_merge$edi>median(Iowa_SPSHN_merge$edi))] <- 1
-
-Iowa_SPSHN_merge$BB1_bin <- 0
-Iowa_SPSHN_merge$BB1_bin[which(Iowa_SPSHN_merge$BB1>median(Iowa_SPSHN_merge$BB1))] <- 1
-
-merged_IOWA$edi_bin <- 0
-merged_IOWA$edi_bin[which(merged_IOWA$edi>median(merged_IOWA$edi))] <- 1
-
-merged_IOWA$BB1_bin <- 0
-merged_IOWA$BB1_bin[which(merged_IOWA$BB1>median(merged_IOWA$BB1))] <- 1
-
-
-
-mod1 <- lm(MLST_RAU~HASPI+BB1+HASPI*BB1,data=merged_IOWA)
-summary(mod1)
-mod1 <- lm(MLST_RAU~SNR8estimate+BB1,data=merged_IOWA)
-summary(mod1)
-
-mod1 <- lm(MLST_RAU~HASPI+BB1+HASPI*BB1,data=merged_UW)
-summary(mod1)
-mod1 <- lm(MLST_RAU~SNR8estimate+BB1,data=merged_IOWA)
-summary(mod1)
-
-
-mod1 <- lm(MLST_RAU~SNR8estimate+Noise_type+BB1+SNR8estimate*BB1,data=merged_data)
-mod1 <- lm(MLST_RAU~SNR8estimate+Noise_type+BB1,data=merged_data)
-mod1 <- lm(MLST_RAU~SNR8estimate+BB1+SNR8estimate*BB1,data=merged_IOWA)
-mod1 <- lm(MLST_RAU~SNR8estimate*BB1,data=merged_IOWA)
-
-mod1 <- lm(MLST_RAU~SNR8estimate+BB1,data=merged_IOWA)
-mod1 <- lm(MLST_RAU~BB1,data=merged_IOWA)
-
-summary(mod1)
-
-plot(merged_IOWA$BB1,merged_IOWA$MLST_RAU)
-ggplot(merged_IOWA, aes(BB1,MLST_RAU,color=variable))+geom_point(aes(colour=factor(HASPI)))
-
-ggplot(merged_UW, aes(BB1,MLST_RAU,color=variable))+geom_point(aes(colour=factor(HASPI)))
-
-ggplot()+
-geom_point(data=merged_IOWA, aes(BB1,MLST_RAU,color=SNR8estimate),size=5)+scale_color_gradient(low='green',high='red')
-
-ggplot()+
-  geom_point(data=merged_IOWA, aes(BB1,MLST_RAU,color=PVR),size=5)+scale_color_gradient(low='green',high='red')
-
-#Plot EDI data to examine possibility of fitting a function
-
-ggplot(data=edi_data, aes(SNR,edi,group=interaction(sub_id,ear)))+
-  geom_point(size=1)+scale_color_gradient(low='yellow',high='purple')+geom_line()
-
-
-ggplot()+
-  geom_point(data=edi_data, aes(SNR,edi,color=sub_id),size=1)+scale_color_gradient(low='yellow',high='purple')+geom_line(aes(sub_id))
-
-ggplot()+
-  geom_point(data=edi_data, aes(SNR,edi,group=sub_id),size=1)+scale_color_gradient(low='yellow',high='purple')+geom_line()
-
-#gradient color HASPI, PVR
-plot(merged_data$SNR8estimate,merged_data$BB1)
 
 #Plot MLST vs BB1 by EDI, ISTS
 
 ggplot()+
-  geom_point(data=merged_IOWA, aes(BB1,MLST_RAU,color=edi_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
+  geom_point(data=merged_data, aes(BB1,MLST_RAU,color=edi_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
 #Plot MLST vs EDI by BB1, ISTS
 ggplot()+
-  geom_point(data=merged_IOWA, aes(edi,MLST_RAU,color=BB1),size=5)+scale_color_gradient(low='yellow',high='purple')
+  geom_point(data=merged_data, aes(edi,MLST_RAU,color=BB1),size=5)+scale_color_gradient(low='yellow',high='purple')
 
-#Plot MLST vs BB1 by EDI, SPSHN
-
-ggplot()+
-  geom_point(data=Iowa_SPSHN_merge, aes(BB1,MLST_RAU,color=edi_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
 #Plot MLST vs EDI by BB1, ISTS
 
 ggplot()+
-  geom_point(data=merged_IOWA, aes(edi,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
+  geom_point(data=merged_data, aes(edi,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
 #Plot MLST vs HASPI by BB1, ISTS
 ggplot()+
-  geom_point(data=merged_IOWA, aes(SNR8estimate,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
+  geom_point(data=merged_data, aes(SNR8estimate,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
 #Plot MLST vs PVR by BB1, ISTS
 ggplot()+
-  geom_point(data=merged_IOWA, aes(PVR,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
+  geom_point(data=merged_data, aes(PVR,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
+
+#Plot MLST vs CeppCor by BB1, ISTS
+ggplot()+
+  geom_point(data=merged_data, aes(SepCorr,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
 #Plot MLST vs EDI by BB1, SPSHN
 
@@ -210,26 +140,56 @@ ggplot()+
 ggplot()+
   geom_point(data=Iowa_SPSHN_merge, aes(PVR,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
+#Plot MLST vs BB1 by EDI, SPSHN
+
+ggplot()+
+  geom_point(data=merged_data, aes(BB1,MLST_RAU,color=edi_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
+
+
 # Create histogram of EDI
 
 
 
-hist(merged_IOWA$edi, breaks=20)
+hist(merged_data$edi, breaks=20)
 
-plot(merged_IOWA$edi,merged_IOWA$BB1) 
+plot(merged_data$edi,merged_data$BB1) 
 
 
-plot(merged_IOWA$HASPI,merged_IOWA$edi)
-abline(lm(merged_IOWA$edi~merged_IOWA$HASPI))
-mod1 <- lm(merged_IOWA$edi~merged_IOWA$HASPI)
+plot(merged_data$HASPI,merged_data$edi)
+abline(lm(merged_data$edi~merged_data$HASPI))
+mod1 <- lm(merged_data$edi~merged_data$HASPI)
 summary(mod1)
 
-plot(merged_IOWA$edi,merged_IOWA$PVR)
-plot(merged_IOWA$HASPI,merged_IOWA$PVR)
-abline(lm(merged_IOWA$edi~merged_IOWA$HASPI))
-mod1 <- lm(merged_IOWA$edi~merged_IOWA$HASPI)
+plot(merged_data$edi,merged_data$PVR)
+plot(merged_data$HASPI,merged_data$PVR)
+abline(lm(merged_data$edi~merged_data$HASPI))
+mod1 <- lm(merged_data$edi~merged_data$HASPI)
 summary(mod1)
 
 
 
 cor(merged_data$SNR8estimate,merged_data$BB1)
+
+
+# Modeling
+
+mod1 <- lm(MLST_RAU~HASPI+BB1+HASPI*BB1,data=merged_data)
+summary(mod1)
+mod1 <- lm(MLST_RAU~SNR8estimate+BB1,data=merged_data)
+summary(mod1)
+
+mod1 <- lm(MLST_RAU~HASPI+BB1+HASPI*BB1,data=merged_UW)
+summary(mod1)
+mod1 <- lm(MLST_RAU~SNR8estimate+BB1,data=merged_data)
+summary(mod1)
+
+
+mod1 <- lm(MLST_RAU~SNR8estimate+Noise_type+BB1+SNR8estimate*BB1,data=merged_data)
+mod1 <- lm(MLST_RAU~SNR8estimate+Noise_type+BB1,data=merged_data)
+mod1 <- lm(MLST_RAU~SNR8estimate+BB1+SNR8estimate*BB1,data=merged_data)
+mod1 <- lm(MLST_RAU~SNR8estimate*BB1,data=merged_data)
+
+mod1 <- lm(MLST_RAU~SNR8estimate+BB1,data=merged_data)
+mod1 <- lm(MLST_RAU~BB1,data=merged_data)
+
+summary(mod1)
