@@ -7,40 +7,6 @@ library(car)
 
 setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/Results/master dataset")
 
-#HASPI data import
-HASPI_8_data <- read.csv('Master_HASPI_Aided_requestedSNR8 2018-09-27.csv')
-HASPI_8_data <- HASPI_8_data[which(HASPI_8_data$SNR_requested=='-10'&HASPI_8_data$Ear.1.left.=='1'),]
-
-HASPI_8_data %>% 
-  distinct(SubId, Noise_type, Ear.1.left., .keep_all = T)
-
-HASPI_8_data_short <- HASPI_8_data %>% distinct(SubId, Noise_type, Ear.1.left., .keep_all = T)
-HASPI_8_data_short <- HASPI_8_data_short[c('SubId','Noise_type','Ear.1.left.','SNR8estimate')]
-
-#HASPI data import with seppcorr
-HASPI_cor_data <- read.csv('Master_HASPI (Aided, ISTS) 2018-12-13.csv')
-HASPI_cor_data <- HASPI_cor_data[which(HASPI_cor_data$SNR_requested=='10'&HASPI_cor_data$Ear.1.left.=='1'),]
-
-HASPI_cor_data %>% 
-  distinct(SubId, Noise_type, Ear.1.left., .keep_all = T)
-
-HASPI_cor_data_short <- HASPI_cor_data %>% distinct(SubId, Noise_type, Ear.1.left., .keep_all = T)
-HASPI_cor_data_short <- HASPI_cor_data_short[c('SubId','Noise_type','Ear.1.left.','SepCorr')]
-
-
-## STM data import. select data by audio only ('Audio'). Have to change STM_data$Noise_type to different name for merging. 
-
-STM_data <- read_excel('Michael_Aided_Data_with_two_factors.xlsx')
-STM_data <- STM_data[which(STM_data$AO_or_AV=='Audio'),]
-
-UW_STM_data<- STM_data[which(STM_data$Subject<=2000),]
-IOWA_STM_data<- STM_data[which(STM_data$Subject>2000),]
-
-
-
-# Stratify UW and Iowa datasets by noise type
-UW_STM_ISTS <- UW_STM_data[which(UW_STM_data$Noise_Type=='ISTS'),]
-UW_STM_SPSHN <- UW_STM_data[which(UW_STM_data$Noise_Type=='SPSHN'),]
 
 ## EDI data import
 # Current EDI dataset only contains IOWA data
@@ -68,7 +34,7 @@ left_SPSHN_edi_data <- SPSHN_edi_data[which(SPSHN_edi_data$ear=='left'),]
 # Load Haspi ceppcor filter by SNR 10 and left ear
 # Load ISTS ceppcor
 HASPI_cor_ISTS <- read.csv('Master_HASPI (Aided, ISTS) 2018-12-13.csv')
-HASPI_cor_ISTS <- HASPI_cor_data[which(HASPI_cor_data$SNR_requested=='10'&HASPI_cor_data$Ear.1.left.=='1'),]
+HASPI_cor_ISTS <- HASPI_cor_ISTS[which(HASPI_cor_ISTS$SNR_requested=='10'&HASPI_cor_ISTS$Ear.1.left.=='1'),]
 # Load SPSHN ceppcor
 HASPI_cor_SPSHN <- read.csv('Master_HASPI (Aided, SPSHN) 2018-12-13.csv')
 HASPI_cor_SPSHN <- HASPI_cor_SPSHN[which(HASPI_cor_SPSHN$SNR_requested=='10'&HASPI_cor_SPSHN$Ear.1.left.=='1'),]
@@ -99,54 +65,36 @@ merged_data$edi_bin[which(merged_data$edi>median(merged_data$edi))] <- 1
 merged_data$BB1_bin <- 0
 merged_data$BB1_bin[which(merged_data$BB1>median(merged_data$BB1))] <- 1
 
-
-#Plot MLST vs BB1 by EDI, ISTS
+## Gradient Plots
+#Plot MLST vs BB1 by EDI
 
 ggplot()+
   geom_point(data=merged_data, aes(BB1,MLST_RAU,color=edi_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
-#Plot MLST vs EDI by BB1, ISTS
+#Plot MLST vs EDI by BB1
 ggplot()+
   geom_point(data=merged_data, aes(edi,MLST_RAU,color=BB1),size=5)+scale_color_gradient(low='yellow',high='purple')
 
-
-#Plot MLST vs EDI by BB1, ISTS
+## Bin plots
+#Plot MLST vs EDI by BB1
 
 ggplot()+
   geom_point(data=merged_data, aes(edi,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
-#Plot MLST vs HASPI by BB1, ISTS
+#Plot MLST vs HASPI by BB1
 ggplot()+
   geom_point(data=merged_data, aes(SNR8estimate,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
-#Plot MLST vs PVR by BB1, ISTS
+#Plot MLST vs PVR by BB1
 ggplot()+
   geom_point(data=merged_data, aes(PVR,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
-#Plot MLST vs CeppCor by BB1, ISTS
+#Plot MLST vs CeppCor by BB1
 ggplot()+
   geom_point(data=merged_data, aes(SepCorr,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
 
-#Plot MLST vs EDI by BB1, SPSHN
 
-ggplot()+
-  geom_point(data=Iowa_SPSHN_merge, aes(edi,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
-
-#Plot MLST vs HASPI by BB1, SPSHN
-ggplot()+
-  geom_point(data=Iowa_SPSHN_merge, aes(SNR8estimate,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
-
-#Plot MLST vs PVR by BB1, SPSHN
-ggplot()+
-  geom_point(data=Iowa_SPSHN_merge, aes(PVR,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
-
-#Plot MLST vs BB1 by EDI, SPSHN
-
-ggplot()+
-  geom_point(data=merged_data, aes(BB1,MLST_RAU,color=edi_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
-
-
-# Create histogram of EDI
+## Create histogram of EDI
 
 
 
