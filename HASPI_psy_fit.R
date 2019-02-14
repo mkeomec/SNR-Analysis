@@ -4,6 +4,7 @@
 
 library(shiny)
 library(dplyr)
+library(plyr)
 library(tidyr)
 library(ggplot2)
 library(quickpsy)
@@ -11,10 +12,12 @@ library('psyphy')
 library("modelfree")
 library(gridExtra)
 
+
 setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/Results/master dataset")
 
-#current_file_data <- read.csv('Master_HASPI Aided 2018-09-19.csv')
-current_file_data <- read.csv('Master_HASPI Unaided 2018-09-19.csv')
+##current_file_data <- read.csv('Master_HASPI Aided 2018-09-19.csv')
+#current_file_data <- read.csv('Master_HASPI Unaided 2018-09-19.csv')
+current_file_data <- read.csv('Master_HASPI Unaided, ISTS 2019-01-14.csv')
 #Loop psychometric fit function for all subjects, both ears, and test types. 
 
 current_file_data$SNR8 <- NULL
@@ -43,6 +46,9 @@ for (i in 1:length(subject_list)){
       xseq <- seq(-10, 15, by = .01)  #I used, for example, a 1000 points
       yseq <- predict(model, data.frame(SNR_requested = xseq), type = "response")
       curve <- data.frame(xseq, yseq)
+      if (i==1){
+      curve_data <- curve}else{
+      curve_data[,i+2] <- curve$yseq}
       current_file_data$SNR8[which(current_file_data$SubId==subject_list[i]&current_file_data$Noise_type==test_list[j]&current_file_data$Ear.1.left.==ear_list[k])] <- yseq[which(xseq==8)]
       
       }
@@ -56,17 +62,24 @@ write.csv(current_file_data,paste("Master_HASPI_SNR8 ",Sys.Date(),".csv",sep="")
 
 # Plot Kates, UW and IoWA data
 
-UW_data <- current_file_data[which(current_file_data$SubId<2000),]
+
+
+#UW_data <- current_file_data[which(current_file_data$SubId<2000),]
 IOWA_data<- current_file_data[which(current_file_data$SubId>2000&current_file_data$SubId<3000),]
 Kates_data <- data.frame('SNR'=c(-10,-5,0,5,10,20),'HASPI'=c(.0141,.1134,.5939,.9408,.99,.9994))
 
 
-plot(UW_data$SNR_requested,UW_data$HASPI)
+#plot(UW_data$SNR_requested,UW_data$HASPI)
 
 
-ggplot(UW_data,aes(SNR_requested,HASPI))+geom_point(alpha=0.1)
+#ggplot(UW_data,aes(SNR_requested,HASPI))+geom_point(alpha=0.1)
 ggplot(IOWA_data,aes(SNR_requested,HASPI))+geom_point(alpha=0.1)
 ggplot(Kates_data,aes(SNR,HASPI))+geom_point()
+
+# Calculate the mean and SD at each SNR measure
+
+plot_data <- ddply(IOWA_data,~SNR_requested,summarise,mean=mean(HASPI),sd=sd(HASPI))
+
 
 #Code to plot psychometric function and HASPI data points. May use later
 #p1 <- ggplot(current_data,aes(x=SNR_theoretical,y=HASPI))+geom_point()

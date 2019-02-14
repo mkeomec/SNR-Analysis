@@ -11,17 +11,19 @@ setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/Res
 ## EDI data import
 # Current EDI dataset only contains IOWA data
 
+
+
+noise_type_list <- c('ISTS','SPSHN')  
+ear_list <- c('left','right')
+
+data_process <- function(noise_type,ear){
+
+  if (ear=='left'){
+      ear_num <- 1} else if (ear=='right'){
+      ear_num <- 2}
+  
 ISTS_edi_data <- read.csv('H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/EDI_analysis_ISTS27-Oct-2018.csv')
 SPSHN_edi_data <- read.csv('H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/EDI_analysis_SPSHN27-Oct-2018.csv')
-
-noise_type <- readline("Which Noise Type to analyze? (ISTS or SPSHN)")  
-ear <- readline("Which Ear to analyze? (left or right)")  
-if (ear=='left'){
-  
-  ear_num <- 1} else if (ear=='right'){
-  ear_num <- 2
-  }
-
 ISTS_edi_data <- ISTS_edi_data[which(ISTS_edi_data$ear==ear),]
 SPSHN_edi_data <- SPSHN_edi_data[which(SPSHN_edi_data$ear==ear),]
 ISTS_edi_SNR10 <- ISTS_edi_data[which(ISTS_edi_data$SNR==10),]
@@ -40,8 +42,6 @@ STM_data <- STM_data[which(STM_data$AO_or_AV=='Audio'),]
 HASPI_cor_ISTS <- read.csv('Master_HASPI (Aided, ISTS) 2018-12-13.csv')
 HASPI_cor_10_ISTS <- HASPI_cor_ISTS[which(HASPI_cor_ISTS$SNR_requested=='10'&HASPI_cor_ISTS$Ear.1.left.==ear_num),]
 HASPI_cor_ISTS <- HASPI_cor_ISTS[which(HASPI_cor_ISTS$Ear.1.left.==ear_num),]
-#Plot sepcorr across SNR
-plot(HASPI_cor_ISTS$SNR_requested,HASPI_cor_ISTS$SepCorr)
 #Filter to SNR 5 and 10
 HASPI_cor_ISTS <- HASPI_cor_ISTS[which(HASPI_cor_ISTS$SNR_requested=='10'|HASPI_cor_ISTS$SNR_requested=='5'),]
 
@@ -62,7 +62,7 @@ HASPI_cor_SPSHN <- read.csv('Master_HASPI (Aided, SPSHN) 2018-12-13.csv')
 HASPI_cor_10_SPSHN <- HASPI_cor_SPSHN[which(HASPI_cor_SPSHN$SNR_requested=='10'&HASPI_cor_SPSHN$Ear.1.left.==ear_num),]
 
 HASPI_cor_SPSHN <- HASPI_cor_SPSHN[which(HASPI_cor_SPSHN$Ear.1.left.==ear_num),]
-plot(HASPI_cor_SPSHN$SNR_requested,HASPI_cor_SPSHN$SepCorr)
+
 HASPI_cor_SPSHN <- HASPI_cor_SPSHN[which(HASPI_cor_SPSHN$SNR_requested=='10'|HASPI_cor_SPSHN$SNR_requested=='5'),]
 
 
@@ -95,110 +95,47 @@ merged_data <- merge(HASPI_8_data,STM_data, by.x=c('SubId','Noise_type'), by.y=c
 
 
 if (noise_type=='ISTS'){
-merged_data <- merge(merged_data,ISTS_edi_SNR10, by.x=c('SubId','Noise_type'), by.y=c('sub_id','noise_test'))
-#merged_data <- merge(merged_data,HASPI_cor_ISTS, by.x=c('SubId','Noise_type'), by.y=c('SubId','Noise_type'))
-merged_data <- merge(merged_data,ceppcor_8_ISTS, by.x=c('SubId'), by.y=c('sub_list'))
-merged_data <- merge(merged_data,EDI_8_ISTS, by.x=c('SubId'), by.y=c('sub_list'))
-
-
-'ISTS'
-
+  merged_data <- merge(merged_data,ISTS_edi_SNR10, by.x=c('SubId','Noise_type'), by.y=c('sub_id','noise_test'))
+  #merged_data <- merge(merged_data,HASPI_cor_ISTS, by.x=c('SubId','Noise_type'), by.y=c('SubId','Noise_type'))
+  merged_data <- merge(merged_data,ceppcor_8_ISTS, by.x=c('SubId'), by.y=c('sub_list'))
+  merged_data <- merge(merged_data,EDI_8_ISTS, by.x=c('SubId'), by.y=c('sub_list'))
+  
+  
+  'ISTS'
+  
 }else if (noise_type=='SPSHN'){
-merged_data <- merge(merged_data,SPSHN_edi_SNR10, by.x=c('SubId','Noise_type'), by.y=c('sub_id','noise_test'))
-#merged_data <- merge(merged_data,HASPI_cor_SPSHN, by.x=c('SubId','Noise_type'), by.y=c('SubId','Noise_type'))
-merged_data <- merge(merged_data,ceppcor_8_SPSHN, by.x=c('SubId'), by.y=c('sub_list'))
-merged_data <- merge(merged_data,EDI_8_SPSHN, by.x=c('SubId'), by.y=c('sub_list'))
-'SPSHN'
-
+  merged_data <- merge(merged_data,SPSHN_edi_SNR10, by.x=c('SubId','Noise_type'), by.y=c('sub_id','noise_test'))
+  #merged_data <- merge(merged_data,HASPI_cor_SPSHN, by.x=c('SubId','Noise_type'), by.y=c('SubId','Noise_type'))
+  merged_data <- merge(merged_data,ceppcor_8_SPSHN, by.x=c('SubId'), by.y=c('sub_list'))
+  merged_data <- merge(merged_data,EDI_8_SPSHN, by.x=c('SubId'), by.y=c('sub_list'))
+  'SPSHN'
+  
 }else{'unknown test type'}
+return(merged_data)
+}
 
-# Stratify HASPI, edi, BB1,  by median
+ISTS_left_data <- data_process('ISTS','left')
+ISTS_right_data <- data_process('ISTS','right')
+SPSHN_left_data <- data_process('SPSHN','left')
+SPSHN_right_data <- data_process('SPSHN','right')
 
-merged_data$HASPI_bin <- 0
-merged_data$HASPI_bin[which(merged_data$SNR8estimate>median(merged_data$SNR8estimate))] <- 1
+estimate8_data <- rbind(ISTS_left_data,ISTS_right_data,SPSHN_left_data,SPSHN_right_data)
+estimate8_data_temp <- estimate8_data[order(estimate8_data$SubId),]
 
-merged_data$edi_bin <- 0
-merged_data$edi_bin[which(merged_data$edi>median(merged_data$edi))] <- 1
+estimate8_data <- estimate8_data_temp[-c(3,4,5,6,7,8,22,23,28)]
+estimate8_data <- estimate8_data[c(1:2,4:22,3)]
+colnames(estimate8_data)[22] <- 'Haspi8estimate'
 
-merged_data$BB1_bin <- 0
-merged_data$BB1_bin[which(merged_data$BB1>median(merged_data$BB1))] <- 1
+write.csv(estimate8_data,paste("SNR8estimates",' ',Sys.Date(),".csv",sep=""),row.names=F)
+# Create Master Dataset of raw data
 
-## Gradient Plots
-#Plot MLST vs BB1 by EDI
+SNR_data_ISTS <- read.csv('Master_HASPI (Aided, ISTS) 2018-12-13.csv')
+SNR_data_SPSHN <- read.csv('Master_HASPI (Aided, SPSHN) 2018-12-13.csv')
+merge_SNR_data <- rbind(SNR_data_ISTS,SNR_data_SPSHN)
+merge_SNR_data_temp <- merge_SNR_data[order(merge_SNR_data$SubId),]
 
-ggplot()+
-  geom_point(data=merged_data, aes(BB1,MLST_RAU,color=edi_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
+ISTS_edi_data <- read.csv('H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/EDI_analysis_ISTS27-Oct-2018.csv')
+SPSHN_edi_data <- read.csv('H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/EDI_analysis_SPSHN27-Oct-2018.csv')
+merge_edi_data <- rbind(ISTS_edi_data,SPSHN_edi_data)
+merge_edi_data_temp <- merge_edi_data[order(merge_edi_data$sub_id),]
 
-#Plot MLST vs EDI by BB1
-ggplot()+
-  geom_point(data=merged_data, aes(edi8,MLST_RAU,color=BB1),size=5)+scale_color_gradient(low='yellow',high='purple')
-
-## Bin plots
-#Plot MLST vs EDI by BB1
-
-ggplot()+
-  geom_point(data=merged_data, aes(edi8,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
-
-#Plot MLST vs HASPI by BB1
-ggplot()+
-  geom_point(data=merged_data, aes(SNR8estimate,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
-
-#Plot MLST vs PVR by BB1
-ggplot()+
-  geom_point(data=merged_data, aes(PVR,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
-
-#Plot MLST vs CeppCor by BB1
-ggplot()+
-  geom_point(data=merged_data, aes(ceppcor8,MLST_RAU,color=BB1_bin),size=5)+scale_color_gradient(low='yellow',high='purple')
-
-
-## Create histogram of EDI
-
-
-
-#hist(merged_data$edi, breaks=20)
-
-#plot(merged_data$edi,merged_data$BB1) 
-
-
-#plot(merged_data$HASPI,merged_data$edi)
-#abline(lm(merged_data$edi~merged_data$HASPI))
-#mod1 <- lm(merged_data$edi~merged_data$HASPI)
-#summary(mod1)
-
-#plot(merged_data$edi,merged_data$PVR)
-#plot(merged_data$HASPI,merged_data$PVR)
-#abline(lm(merged_data$edi~merged_data$HASPI))
-#mod1 <- lm(merged_data$edi~merged_data$HASPI)
-#summary(mod1)
-
-
-
-#cor(merged_data$SNR8estimate,merged_data$BB1)
-
-
-# Modeling
-
-#mod1 <- lm(MLST_RAU~HASPI+BB1+HASPI*BB1,data=merged_data)
-#summary(mod1)
-#mod1 <- lm(MLST_RAU~SNR8estimate+BB1,data=merged_data)
-#summary(mod1)
-
-#mod1 <- lm(MLST_RAU~HASPI+BB1+HASPI*BB1,data=merged_UW)
-#summary(mod1)
-#mod1 <- lm(MLST_RAU~SNR8estimate+BB1,data=merged_data)
-#summary(mod1)
-
-
-#mod1 <- lm(MLST_RAU~SNR8estimate+Noise_type+BB1+SNR8estimate*BB1,data=merged_data)
-#mod1 <- lm(MLST_RAU~SNR8estimate+Noise_type+BB1,data=merged_data)
-#mod1 <- lm(MLST_RAU~SNR8estimate+BB1+SNR8estimate*BB1,data=merged_data)
-#mod1 <- lm(MLST_RAU~SNR8estimate*BB1,data=merged_data)
-
-#mod1 <- lm(MLST_RAU~SNR8estimate+BB1,data=merged_data)
-#mod1 <- lm(MLST_RAU~BB1,data=merged_data)
-
-#summary(mod1)
-
-
-# Create Master Dataset 
