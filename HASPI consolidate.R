@@ -1,13 +1,18 @@
 # SNR HASPI 
 
-# This code takes individual HASPI results and consolidates them into a master file
+# This code takes individual HASPI results of a certain condition (Aided, Unaided, ISTS, SPSHN) and consolidates them into a master file
 
+#load libraries
 library(shiny)
 library(dplyr)
 library(tidyr)
 library(stringr)
-#setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/")
-setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/Results/Unaided")
+
+# Files may reside in different locations. 
+setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/")
+
+#setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/Results/Unaided")
+#setwd("H:/SNR Subject Data/Project AD_ Hearing Aids and SNR/SIN/subject_data/Results")
 
 # Select Hagerman test results to consolidate. Do not include Parentheses in the selection input. 
 
@@ -17,6 +22,7 @@ filelist <- list.files(path=".",pattern=h_test)
 
 filelist_length <- length(filelist)
 
+# Loop to load each file and create a master dataset with all subjects
 
 for (i in 1:filelist_length){
 
@@ -36,6 +42,8 @@ if (i==1){
 
 }
 
+
+# This code adjusts the format of the dataset from wide to long based on ear. Each subject would therefore have 12 rows of data, 6 for each ear. Each element needs to be adjusted separately, then rejoined
 
 attenuation <- master_file_data[,c(1:5,20)]
 att_long <- attenuation %>% gather(ear,attenuation,attenuation_1:attenuation_2)
@@ -63,23 +71,23 @@ raw_long_4 <- raw_4 %>% gather(ear,raw,raw_4,raw_8)
 
 raw_long <- cbind(raw_long_1,raw_long_2,raw_long_3,raw_long_4)
 
-# Attempt to convert all 'raw' values into long format. Skip for now and just use sep corr
-#raw <- master_file_data[,c(12:19)]
-#raw_long <- raw %>% gather(ear,raw,raw_1:raw_8)
 
-#raw <- master_file_data[,c(12,16)]
-#raw_long <- raw %>% gather(ear,raw,raw_1:raw_5)
-
-#master_data <- cbind(att_long,emp_long,theoretical_long,intel_long,raw_long)
+# Rejoing separate elements into master dataset
 master_data <- cbind(att_long,emp_long,theoretical_long,intel_long,raw_long)
-#master_data <- master_data[-c(4,7,9,11,13)]
+
+# Many columns contain redundent information. Only pass the needed columns
 master_data <- master_data[-c(3,7,9,11,13,15,17,19)]
+
+# Rename the values in the column for ear to 1 or 2. 
 master_data$ear[master_data$ear=='attenuation_1'] <- 1
 master_data$ear[master_data$ear=='attenuation_2'] <- 2
 
-#names(master_data) <- c('SubId','Noise_type','SNR_requested','Ear(1=left)','SNR_attenuation','SNR_empirical','SNR_theoretical','HASPI','SepCorr')
+#Assign column names
 names(master_data) <- c('SubId','SNR_requested','Noise_type','Ear(1=left)','SNR_attenuation','SNR_empirical','SNR_theoretical','HASPI','ceppcor','raw1','raw2','raw3')
 attach(master_data)
 
+# Sort master dataset by subid and noise type
 master_data <- master_data[order(SubId,Noise_type),]
+
+#Write to file
 write.csv(master_data,paste("Master_HASPI ",h_test,' ',Sys.Date(),".csv",sep=""),row.names=F)
